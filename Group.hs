@@ -9,7 +9,7 @@ showGroup :: (Show a) => Group a -> String
 showGroup grp = show (set grp)
 
 isValidGroup :: (Eq a) => Group a -> Bool
-isValidGroup = foldl1 (&&) (map (\f -> f grp)) [isClosed, isIdentityIdentity, isInverseInverse, isAssociative]
+isValidGroup = foldl1 (&&) (map (\f -> f grp) [isClosed, isIdentityIdentity, isInverseInverse, isAssociative])
 
 
 isClosed :: (Eq a) => Group a -> Bool
