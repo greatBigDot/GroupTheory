@@ -42,8 +42,29 @@ iA :: (Eq a) => Group a -> (a,a,a) -> Bool
 iA grp (g,h,j) = f (f g h) j == f g (f h j)
   where f = func grp
 
+z :: (Integral a) => a -> Group a
+z n = Group { set      = set_Z n
+           , func     = func_Z n
+           , identity = identity_Z n
+           , inverse  = inverse_Z n }
 
-main = print "Hello World!"
+set_Z :: (Integral a) => a -> [a]
+set_Z n = [0..(n-1)]
+
+func_Z :: (Integral a) => a -> a -> a -> a
+func_Z n x y = mod (x + y) n
+
+identity_Z :: (Integral a) => a -> a
+identity_Z n = 0
+
+inverse_Z :: (Integral a) => a -> a -> a
+inverse_Z n x = mod (-x) n
+
+
+main = do 
+{ print (showGroup (z 5))
+; print (isValidGroup (z 5))
+}
 
 
 cProd :: [a] -> [b] -> [(a, b)]
