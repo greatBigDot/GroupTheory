@@ -44,6 +44,8 @@ iA grp (g,h,j) = f (f g h) j == f g (f h j)
   where f = func grp
 
 
+main = print "Hello World!"
+
 
 cProd :: [a] -> [b] -> [(a, b)]
 cProd [] ys     = []
