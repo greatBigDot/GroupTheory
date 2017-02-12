@@ -1,4 +1,5 @@
 import Data.Maybe
+import Data.Either
 
 data Group a = Group {
   set      :: [a]
@@ -11,39 +12,30 @@ isValidGroup :: (Eq a) => Group a -> Bool
 isValidGroup grp = foldl1 (&&) (map (\f -> f grp) [isClosed, isIdentityIdentity, isInverseInverse, isAssociative])
 -}
 
+--Returns true iff f(g,h) is in the group.
 iC :: (Eq a) => Group a -> (a, a) -> Bool
 iC grp (g,h) = elem (f g h) (set grp)
   where f = func grp
-
+--Returns true iff the group is closed.
 isClosed :: (Eq a) => Group a -> Bool
-isClosed grp = foldl (&&) True (map (iC grp) (cSquare (set grp)))
+isClosed grp = and (map (iC grp) (cSquare (set grp)))
 
-
-
---checks whether the given prospective identity (e) acts as the identity for the given input.
-iIdId :: (Eq a) => Group a -> a -> a -> Bool
-iIdId grp e g = (f g e == g) && (f e g == g)
-
---checks whether the given input  is the identity element for the group.
+--Returns true iff f(e, g) = f(g, e) = g
+isId :: (Eq a) => Group a -> a -> a -> Bool
+isId grp e g = f e g == g && f g e == g
+  where f = (func grp)
+--Returns true iff e is an identity element of the group.
 isIdentity :: (Eq a) => Group a -> a -> Bool
-isIdentity grp e = 
-  | n == 0                = iIdId' ((set grp)!!0)
-  | iIdId' ((set grp)!!n) = True
-  | otherwise             = isIdentity grp (n-1)
-  where iIdId' g = iIdId grp g ((length (set grp))-1)
-
---checks whether the given group has an identity element
+isIdentity grp e = and (map (isId grp e) (set grp))
+--Returns true iff the group has an identity element.
 verAx2 :: (Eq a) => Group a -> Bool
-verAx2 grp = isIdentity grp ((length (set grp)) - 1)
-
---returns the given group's identity element (wrapped in a Maybe type) if it has one; returns a Nothing if it doesn't.
+verAx2 grp = or (map (isIdentity grp) (set grp))
+--Returns the given group's identity element (wrapped in a Maybe type) iff it has one; returns a Nothing iff it doesn't.
 identity :: (Eq a) => Group a -> Maybe a
 identity grp
   = if' (verAx2 grp)
-      (Just ((set grp) !! (length (takeWhile (not . isIdentity grp) [0..(ord-1)]))))
+      (Just ((set grp) !! (length (takeWhile (not . (isIdentity grp)) (set grp)))))
       (Nothing)
-  where ord = length (set grp)
-
 
 --isInverseInverse :: (Eq a) => Group a -> Bool
 --isInverseInverse grp = foldl (&&) True (map (iInIn grp) (set grp))
@@ -67,7 +59,7 @@ z n = Group { set      = set_Z n
             , func     = func_Z n
             }
 set_Z :: (Integral a) => a -> [a]
-set_Z n = [1,2,0,3,4]
+set_Z n = [0..(n-1)]
 
 func_Z :: (Integral a) => a -> a -> a -> a
 func_Z n x y = mod (x + y) n
@@ -80,10 +72,14 @@ inverse_Z :: (Integral a) => a -> a -> a
 inverse_Z n x = mod (-x) n
 -}
 
+n :: Int
+n = 20
+
 main = do
-  { putStrLn . showGroup . z $ 5
-  ; print . verAx2 . z $ 5
-  ; print . fromJust . identity . z $ 5
+  { putStrLn . showGroup . z $ n
+  ; print . isClosed . z $ n
+  ; print . verAx2 . z $ n
+  ; print . fromJust . identity . z $ n
   }
 
 
