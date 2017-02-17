@@ -37,21 +37,29 @@ identity grp
       (Just ((set grp) !! (length (takeWhile (not . (isIdentity grp)) (set grp)))))
       (Nothing)
 
---isInverseInverse :: (Eq a) => Group a -> Bool
---isInverseInverse grp = foldl (&&) True (map (iInIn grp) (set grp))
+--Returns true iff the given function acts as an inverse function on the given group element.
+isInv :: (Eq a) => Group a -> (a -> a) -> a -> Bool
+isInv grp inv g = f g (inv g) == e && f (inv g) g == e
+  where f = func grp
+        e = identity grp
+--Returns true iff the given function is an inverse on the group.
+isInverse :: (Eq a) => Group a -> (a -> a) -> Bool
+isInverse grp inv = and (map (isInv grp inv) (set grp))
 
-isAssociative :: (Eq a) => Group a -> Bool
-isAssociative grp = foldl (&&) True (map (iA grp) (cCube (set grp)))
+verAx3 :: (Eq a) => Group a -> Bool
+verAx3 grp = or (map (isInverse grp) ({-set of all closed unary functions on grp.-}))
 
---iInIn :: (Eq a) => Group a -> a -> Bool
---iInIn grp g = (f g (inv g)) == e && (f (inv g) g) == e
---  where f = func grp
---        e = identity grp
---        inv = inverse grp
+isInverseInverse :: (Eq a) => Group a -> Bool
+isInverseInverse grp = foldl (&&) True (map (iInIn grp) (set grp))
+
+
 
 iA :: (Eq a) => Group a -> (a,a,a) -> Bool
 iA grp (g,h,j) = f (f g h) j == f g (f h j)
   where f = func grp
+
+isAssociative :: (Eq a) => Group a -> Bool
+isAssociative grp = foldl (&&) True (map (iA grp) (cCube (set grp)))
 
 
 z :: (Integral a) => a -> Group a
