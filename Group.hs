@@ -1,6 +1,15 @@
 import Data.Maybe
 import Data.Either
 
+module Group
+  ( Group (..)
+  , showGroup
+  , verAxAll
+  , isGroup
+  , identity
+  , inverse
+  )
+
 data Group a = Group { set  :: [a]
                      , func :: (a -> a -> a) }
 
@@ -67,40 +76,21 @@ verAx3 :: (Eq a) => Group a -> Bool
 verAx3 grp = and (map (isAssoc grp) (cCube (set grp)))
 
 
---Returns the group of nonzero integers mod n with multiplication mod n.
-zx :: (Integral a) => a -> Group a
-zx n = Group { set  = set_Zx  n
-             , func = func_Zx n }
---Returns the set of nonzero integers mod n
-set_Zx :: (Integral a) => a -> [a]
-set_Zx n = [1..(n-1)]
---Returns multiplication mod n
-func_Zx :: (Integral a) => a -> a -> a -> a
-func_Zx n = (\x y -> mod (x * y) n)
+--Some non-group theory functions used above:
 
-zn :: (Integral a) => Group a
-zn = zx 13
-
-main = do
-  { putStrLn . showGroup $ zn
-  ; print . verAxAll $ zn
-  ; print . isGroup  $ zn
-  ; print . identity $ zn
-  ; print $ map (inverse zn) (set zn)
-  }
-
-
+--cartesian product
 cProd :: [a] -> [b] -> [(a, b)]
 cProd [] ys     = []
 cProd [x] ys    = map (\y -> (x,y)) ys
 cProd (x:xs) ys = (cProd [x] ys) ++ (cProd xs ys)
-
+--cartesian square
 cSquare :: [a] -> [(a,a)]
 cSquare xs = cProd xs xs
-
+--cartesian cube [note: this can't just use cProd because in Haskell, (x,y,z) =/= ((x,y),z).]
 cCube :: [a] -> [(a,a,a)]
 cCube xs = [(a,b,c) | a <- xs, b <- xs, c <- xs]
 
+--Purely functional alternative to [if/then/else] syntax.
 if' :: Bool -> a -> a -> a
 if' True  x _ = x
 if' False _ y = y
