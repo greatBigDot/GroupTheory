@@ -1,2 +1,2 @@
 # GroupTheory
-An attempt to create a data type and associated functions modelling the mathematical idea of "groups" from group theory. For the moment, I'm only trying to get finite groups working, but since it's easy to represent infinitely large data structures in Haskell, it might be feasible to simulate infinite groups sometime down the road.
+An attempt to create a data type and associated functions modeling the mathematical idea of "groups" from group theory. For the moment, I'm only trying to get finite groups working, but since it's easy to represent infinitely large data structures in Haskell, it might be feasible to simulate infinite groups sometime down the road.
