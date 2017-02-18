@@ -1,24 +1,33 @@
 import Data.Maybe
 import Data.Either
 
-data Group a = Group {
-  set      :: [a]
-, func     :: (a -> a -> a) } 
+data Group a = Group { set  :: [a]
+                     , func :: (a -> a -> a) }
 
 showGroup :: (Show a) => Group a -> String
 showGroup grp = show (set grp)
-{-
-isValidGroup :: (Eq a) => Group a -> Bool
-isValidGroup grp = foldl1 (&&) (map (\f -> f grp) [isClosed, isIdentityIdentity, isInverseInverse, isAssociative])
--}
+
+
+verAx :: (Eq a) => Int -> (Group a -> Bool)
+verAx 0 = verAx0
+verAx 1 = verAx1
+verAx 2 = verAx2
+verAx 3 = verAx3
+
+verAxAll :: (Eq a) => Group a -> [Bool]
+verAxAll grp = map (\f -> f grp) (map verAx [0..3])
+
+isGroup :: (Eq a) => Group a -> Bool
+isGroup grp = and (verAxAll grp)
+
 
 --Returns true iff f(g,h) is in the group.
-iC :: (Eq a) => Group a -> (a, a) -> Bool
-iC grp (g,h) = elem (f g h) (set grp)
+isCl :: (Eq a) => Group a -> (a, a) -> Bool
+isCl grp (g,h) = elem (f g h) (set grp)
   where f = func grp
 --Returns true iff the group is closed.
-isClosed :: (Eq a) => Group a -> Bool
-isClosed grp = and (map (iC grp) (cSquare (set grp)))
+verAx0 :: (Eq a) => Group a -> Bool
+verAx0 grp = and (map (isCl grp) (cSquare (set grp)))
 
 --Returns true iff f(e, g) = f(g, e) = g
 isId :: (Eq a) => Group a -> a -> a -> Bool
@@ -28,66 +37,56 @@ isId grp e g = f e g == g && f g e == g
 isIdentity :: (Eq a) => Group a -> a -> Bool
 isIdentity grp e = and (map (isId grp e) (set grp))
 --Returns true iff the group has an identity element.
-verAx2 :: (Eq a) => Group a -> Bool
-verAx2 grp = or (map (isIdentity grp) (set grp))
---Returns the given group's identity element (wrapped in a Maybe type) iff it has one; returns a Nothing iff it doesn't.
+verAx1 :: (Eq a) => Group a -> Bool
+verAx1 grp = or (map (isIdentity grp) (set grp))
+--Returns the given group's identity element (wrapped in a Maybe type) if it has one; returns a Nothing otherwise.
 identity :: (Eq a) => Group a -> Maybe a
-identity grp
-  = if' (verAx2 grp)
-      (Just ((set grp) !! (length (takeWhile (not . (isIdentity grp)) (set grp)))))
-      (Nothing)
+identity grp = takeFirst (isIdentity grp) (set grp)
 
---Returns true iff the given function acts as an inverse function on the given group element.
-isInv :: (Eq a) => Group a -> (a -> a) -> a -> Bool
-isInv grp inv g = f g (inv g) == e && f (inv g) g == e
+--Returns true iff g and h are inverses.
+isInv :: (Eq a) => Group a -> a -> a -> Bool
+isInv grp g h = (f g h == e) && (f h g == e)
   where f = func grp
-        e = identity grp
---Returns true iff the given function is an inverse on the group.
-isInverse :: (Eq a) => Group a -> (a -> a) -> Bool
-isInverse grp inv = and (map (isInv grp inv) (set grp))
+        e = maybe (error "No identity") (id) (identity grp)
+--Returns true iff g has in inverse.
+isInverse :: (Eq a) => Group a -> a -> Bool
+isInverse grp g = or (map (isInv grp g) (set grp))
+--Returns true iff every element of grp has an inverse.
+verAx2 :: (Eq a) => Group a -> Bool
+verAx2 grp = and (map (isInverse grp) (set grp))
+--Returns the inverse function of the group if it has one; returns a Nothing otherwise.
+inverse :: (Eq a) => Group a -> (a -> Maybe a)
+inverse grp = (\g -> takeFirst (isInv grp g) (set grp))
 
+--Returns true iff the group function is associative over the three inputs.
+isAssoc :: (Eq a) => Group a -> (a,a,a) -> Bool
+isAssoc grp (g,h,j) = f (f g h) j == f g (f h j)
+  where f = func grp
+--Returns true iff the group is associative.
 verAx3 :: (Eq a) => Group a -> Bool
-verAx3 grp = or (map (isInverse grp) ({-set of all closed unary functions on grp.-}))
-
-isInverseInverse :: (Eq a) => Group a -> Bool
-isInverseInverse grp = foldl (&&) True (map (iInIn grp) (set grp))
+verAx3 grp = and (map (isAssoc grp) (cCube (set grp)))
 
 
+--Returns the group of nonzero integers mod n with multiplication mod n.
+zx :: (Integral a) => a -> Group a
+zx n = Group { set  = set_Zx  n
+             , func = func_Zx n }
+--Returns the set of nonzero integers mod n
+set_Zx :: (Integral a) => a -> [a]
+set_Zx n = [1..(n-1)]
+--Returns multiplication mod n
+func_Zx :: (Integral a) => a -> a -> a -> a
+func_Zx n = (\x y -> mod (x * y) n)
 
-iA :: (Eq a) => Group a -> (a,a,a) -> Bool
-iA grp (g,h,j) = f (f g h) j == f g (f h j)
-  where f = func grp
-
-isAssociative :: (Eq a) => Group a -> Bool
-isAssociative grp = foldl (&&) True (map (iA grp) (cCube (set grp)))
-
-
-z :: (Integral a) => a -> Group a
-z n = Group { set      = set_Z n
-            , func     = func_Z n
-            }
-set_Z :: (Integral a) => a -> [a]
-set_Z n = [0..(n-1)]
-
-func_Z :: (Integral a) => a -> a -> a -> a
-func_Z n x y = mod (x + y) n
-
-{-
-identity_Z :: (Integral a) => a -> a
-identity_Z n = 0
-
-inverse_Z :: (Integral a) => a -> a -> a
-inverse_Z n x = mod (-x) n
--}
-
-n :: Int
-n = 20
+zn :: (Integral a) => Group a
+zn = zx 13
 
 main = do
-  { putStrLn . showGroup . z $ n
-  ; print . isClosed . z $ n
-  ; print . verAx2 . z $ n
-  ; print . fromJust . identity . z $ n
+  { putStrLn . showGroup $ zn
+  ; print . verAxAll $ zn
+  ; print . isGroup  $ zn
+  ; print . identity $ zn
+  ; print $ map (inverse zn) (set zn)
   }
 
 
@@ -105,3 +104,8 @@ cCube xs = [(a,b,c) | a <- xs, b <- xs, c <- xs]
 if' :: Bool -> a -> a -> a
 if' True  x _ = x
 if' False _ y = y
+
+--Returns the first element of the list that satisfies the predicate, or Nothing if no such element exists.
+takeFirst :: (a -> Bool) -> [a] -> Maybe a
+takeFirst _ []     = Nothing
+takeFirst p (x:xs) = if' (p x) (Just x) (takeFirst p xs)
