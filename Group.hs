@@ -15,6 +15,7 @@ data Group a = Group { set  :: [a]
 instance (Show a) => Show (Group a) where
   show grp = show $ set grp
 
+--instance Ord (Group a) where
 
 verAx :: (Eq a) => Int -> (Group a -> Bool)
 verAx 0 = verAx0
@@ -26,7 +27,7 @@ verAxAll :: (Eq a) => Group a -> [Bool]
 verAxAll grp = map (\f -> f grp) (map verAx [0..3])
 
 isGroup :: (Eq a) => Group a -> Bool
-isGroup grp = and (verAxAll grp)
+isGroup = and . verAxAll
 
 
 --Returns true iff f(g,h) is in the group.
@@ -73,6 +74,23 @@ isAssoc grp (g,h,j) = f (f g h) j == f g (f h j)
 --Returns true iff the group is associative.
 verAx3 :: (Eq a) => Group a -> Bool
 verAx3 grp = and (map (isAssoc grp) (cCube (set grp)))
+
+
+--Non-foundational group stuff
+--In group theory, "order" refers both to the cardinality of a group's underlying set and the least positive integer n for a given element g such that g^n = 1_G. In here, the function "order" refers to the former notion, while the function "ord" refers to the latter.
+--Order of a group (in the sense of cardinality)
+order :: (Num b) => Group a -> b
+order = length . set
+
+--Group "exponentation;" it's repeated application of the group function. I.e., g^n = g*g*...*g, with n occurences of g. Note that if the Group is the integers with addition, then g^n refers to multiplication. That is, just because I'm using the "^" symbol and the words power and exponentation doesn't mean it's actually the function pow :: C^2 -> C.
+pow :: (Integral b) => Group a -> (a -> b -> a)
+pow grp _ 0 = identity grp
+pow grp g n = (func grp) g (pow grp g (n-1))
+
+--Order of an element in a group (not cardinality; that's order :: (Num b) => Group a -> b)). That is, the order of g in G is the least integer n such that g^n = 1_G. Every element of every finite group has a finite order, so this will only get stuck in an infinite loop for infinite groups, which I can't even create yet.
+ord :: (Integral b) => Group a -> (a -> b)
+ord grp g = 1 + length (takeWhile (/= e) (map (pow grp g) [1..(order grp)]))
+  where e = identity grp
 
 
 --Some non-group theory functions used above:
