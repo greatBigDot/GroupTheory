@@ -1,20 +1,19 @@
+module Group
+( Group(..)
+, verAxAll
+, isGroup
+, identity
+, inverse
+) where
+
 import Data.Maybe
 import Data.Either
-
-module Group
-  ( Group (..)
-  , showGroup
-  , verAxAll
-  , isGroup
-  , identity
-  , inverse
-  )
 
 data Group a = Group { set  :: [a]
                      , func :: (a -> a -> a) }
 
-showGroup :: (Show a) => Group a -> String
-showGroup grp = show (set grp)
+instance (Show a) => Show (Group a) where
+  show grp = show $ set grp
 
 
 verAx :: (Eq a) => Int -> (Group a -> Bool)
@@ -63,7 +62,7 @@ isInverse grp g = or (map (isInv grp g) (set grp))
 --Returns true iff every element of grp has an inverse.
 verAx2 :: (Eq a) => Group a -> Bool
 verAx2 grp = and (map (isInverse grp) (set grp))
---Returns the inverse function of the group if it has one; returns a Nothing otherwise.
+--Returns the inverse function of the group (wrapped in a Maybe type) if it has one; returns a Nothing otherwise.
 inverse :: (Eq a) => Group a -> (a -> Maybe a)
 inverse grp = (\g -> takeFirst (isInv grp g) (set grp))
 
@@ -95,7 +94,7 @@ if' :: Bool -> a -> a -> a
 if' True  x _ = x
 if' False _ y = y
 
---Returns the first element of the list that satisfies the predicate, or Nothing if no such element exists.
+--Returns the first element of the list that satisfies the predicate (wrapped in a Maybe type), or Nothing if no such element exists.
 takeFirst :: (a -> Bool) -> [a] -> Maybe a
 takeFirst _ []     = Nothing
 takeFirst p (x:xs) = if' (p x) (Just x) (takeFirst p xs)

@@ -15,7 +15,7 @@ zn :: (Integral a) => Group a
 zn = zx 13
 
 main = do
-  { putStrLn . showGroup $ zn
+  { print zn
   ; print . verAxAll $ zn
   ; print . isGroup  $ zn
   ; print . identity $ zn
