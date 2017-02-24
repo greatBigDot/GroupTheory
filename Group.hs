@@ -1,10 +1,13 @@
 module Group
-( Group(..)
-, verAxAll
-, isGroup
-, identity
-, inverse
-) where
+  ( Group(..)
+  , verAxAll
+  , isGroup
+  , identity
+  , inverse
+  , ord
+  , order
+  , pow
+  ) where
 
 import Data.Maybe
 import Data.Either
@@ -51,12 +54,15 @@ verAx1 grp = or (map (isIdentity grp) (set grp))
 --Returns the given group's identity element (wrapped in a Maybe type) if it has one; returns a Nothing otherwise.
 identity :: (Eq a) => Group a -> Maybe a
 identity grp = takeFirst (isIdentity grp) (set grp)
+--Unwraps ("eXtracts") the identity. Right now it just throws an error if it's Nothing; later I'll make it fail more elegantly.
+identityX :: (Eq a) => Group a -> a
+identityX grp = maybe (error "Not a group: No identity element.") id (identity grp)
 
 --Returns true iff g and h are inverses.
 isInv :: (Eq a) => Group a -> a -> a -> Bool
 isInv grp g h = (f g h == e) && (f h g == e)
   where f = func grp
-        e = maybe (error "No identity") (id) (identity grp)
+        e = identityX grp
 --Returns true iff g has in inverse.
 isInverse :: (Eq a) => Group a -> a -> Bool
 isInverse grp g = or (map (isInv grp g) (set grp))
@@ -80,17 +86,17 @@ verAx3 grp = and (map (isAssoc grp) (cCube (set grp)))
 --In group theory, "order" refers both to the cardinality of a group's underlying set and the least positive integer n for a given element g such that g^n = 1_G. In here, the function "order" refers to the former notion, while the function "ord" refers to the latter.
 --Order of a group (in the sense of cardinality)
 order :: (Num b) => Group a -> b
-order = length . set
+order = genericLength . set
 
 --Group "exponentation;" it's repeated application of the group function. I.e., g^n = g*g*...*g, with n occurences of g. Note that if the Group is the integers with addition, then g^n refers to multiplication. That is, just because I'm using the "^" symbol and the words power and exponentation doesn't mean it's actually the function pow :: C^2 -> C.
-pow :: (Integral b) => Group a -> (a -> b -> a)
-pow grp _ 0 = identity grp
+pow :: (Eq a, Integral b) => Group a -> (a -> b -> a)
+pow grp _ 0 = identityX grp
 pow grp g n = (func grp) g (pow grp g (n-1))
 
 --Order of an element in a group (not cardinality; that's order :: (Num b) => Group a -> b)). That is, the order of g in G is the least integer n such that g^n = 1_G. Every element of every finite group has a finite order, so this will only get stuck in an infinite loop for infinite groups, which I can't even create yet.
-ord :: (Integral b) => Group a -> (a -> b)
-ord grp g = 1 + length (takeWhile (/= e) (map (pow grp g) [1..(order grp)]))
-  where e = identity grp
+ord :: (Eq a, Integral b) => Group a -> (a -> b)
+ord grp g = 1 + genericLength (takeWhile (/= e) (map (pow grp g) [1..(order grp)]))
+  where e = identityX grp
 
 
 --Some non-group theory functions used above:
@@ -116,3 +122,8 @@ if' False _ y = y
 takeFirst :: (a -> Bool) -> [a] -> Maybe a
 takeFirst _ []     = Nothing
 takeFirst p (x:xs) = if' (p x) (Just x) (takeFirst p xs)
+
+--Generic length function
+genericLength :: (Num b) => [a] -> b
+genericLength [] = 0
+genericLength (x:xs) = 1 + genericLength xs

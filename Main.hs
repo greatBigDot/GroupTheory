@@ -16,8 +16,7 @@ zn = zx 13
 
 main = do
   { print zn
-  ; print . verAxAll $ zn
   ; print . isGroup  $ zn
-  ; print . identity $ zn
-  ; print $ map (inverse zn) (set zn)
+  ; print . order    $ zn
+  ; print (map (ord zn) [1..(order zn)])
   }
